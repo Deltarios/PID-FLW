@@ -49,6 +49,8 @@ const float kP = 0.0;
 const float kI = 0.0;
 const float kD = 0.0;
 
+volatile unsigned long leftCount = 0;
+volatile unsigned long rightCount = 0;
 
 unsigned int posicion = 0;
 unsigned int posicionAnterior = 0;
@@ -79,6 +81,9 @@ void setup() {
 
   pinMode(ENCO_A_DER, INPUT);
   pinMode(ENCO_B_DER, INPUT);
+
+  attachInterrupt(0, leftEncoderEvent, CHANGE);
+  attachInterrupt(1, rightEncoderEvent, CHANGE);
 
   for (int i = 0; i < 5; i++) {
     qtra.calibrate();
@@ -130,6 +135,40 @@ unsigned int calculoPID() {
 
   return (kP * posicion + kI * integral + kD * derivativo);
 
+}
+
+// encoder event for the interrupt call
+void leftEncoderEvent() {
+  if (digitalRead(LH_ENCODER_A) == HIGH) {
+    if (digitalRead(LH_ENCODER_B) == LOW) {
+      leftCount++;
+    } else {
+      leftCount--;
+    }
+  } else {
+    if (digitalRead(LH_ENCODER_B) == LOW) {
+      leftCount--;
+    } else {
+      leftCount++;
+    }
+  }
+}
+ 
+// encoder event for the interrupt call
+void rightEncoderEvent() {
+  if (digitalRead(RH_ENCODER_A) == HIGH) {
+    if (digitalRead(RH_ENCODER_B) == LOW) {
+      rightCount++;
+    } else {
+      rightCount--;
+    }
+  } else {
+    if (digitalRead(RH_ENCODER_B) == LOW) {
+      rightCount--;
+    } else {
+      rightCount++;
+    }
+  }
 }
 
 void leerVelocidad() {
