@@ -11,9 +11,6 @@
  ***************************************************************
 */
 #include <QTRSensors.h>
-#include <Encoder.h>
-
-#define ENCODER_OPTIMIZE_INTERRUPTS
 
 #define AIN_1 7
 #define AIN_2 8
@@ -43,7 +40,7 @@ unsigned int valoresSensorIr[NUM_SENSOR_IR];
 bool estadoBoton = false;
 bool estadoRobot = false;
 
-float velocidadBase = 150.0;
+const float velocidadBase = 150.0;
 
 const float kP = 0.0;
 const float kI = 0.0;
@@ -58,9 +55,6 @@ unsigned int derivativo = 0;
 unsigned int integral = 0;
 
 QTRSensorsAnalog qtra(sensores_ir, NUM_SENSOR_IR);
-
-Encoder knobLeft(ENCO_A_IZQ, ENCO_B_IZQ);
-Encoder knobRight(ENCO_A_DER, ENCO_B_DER);
 
 
 void setup() {
@@ -82,8 +76,8 @@ void setup() {
   pinMode(ENCO_A_DER, INPUT);
   pinMode(ENCO_B_DER, INPUT);
 
-  attachInterrupt(0, leftEncoderEvent, CHANGE);
-  attachInterrupt(1, rightEncoderEvent, CHANGE);
+  attachInterrupt(0, leftEncoderEvento, CHANGE);
+  attachInterrupt(1, rightEncoderEvento, CHANGE);
 
   for (int i = 0; i < 5; i++) {
     qtra.calibrate();
@@ -118,14 +112,6 @@ void inicioRobot() {
   posicionAnterior = posicion;
 }
 
-unsigned int leerPosicionError() {
-  qtra.read(valoresSensorIr);
-
-  unsigned int posicion_actual = qtra.readLine(valoresSensorIr, QTR_EMITTERS_ON, 0);
-
-  return (POS_OBJECTIVO - posicion_actual);
-}
-
 unsigned int calculoPID() {
   posicion = leerPosicionError();
 
@@ -137,43 +123,44 @@ unsigned int calculoPID() {
 
 }
 
-// encoder event for the interrupt call
-void leftEncoderEvent() {
-  if (digitalRead(LH_ENCODER_A) == HIGH) {
-    if (digitalRead(LH_ENCODER_B) == LOW) {
-      leftCount++;
-    } else {
-      leftCount--;
-    }
-  } else {
-    if (digitalRead(LH_ENCODER_B) == LOW) {
-      leftCount--;
-    } else {
-      leftCount++;
-    }
-  }
+unsigned int leerPosicionError() {
+  qtra.read(valoresSensorIr);
+
+  unsigned int posicion_actual = qtra.readLine(valoresSensorIr, QTR_EMITTERS_ON, 0);
+
+  return (POS_OBJECTIVO - posicion_actual);
 }
- 
-// encoder event for the interrupt call
-void rightEncoderEvent() {
-  if (digitalRead(RH_ENCODER_A) == HIGH) {
-    if (digitalRead(RH_ENCODER_B) == LOW) {
-      rightCount++;
+
+void leftEncoderEvento() {
+  if (digitalRead(ENCO_A_IZQ) == HIGH) {
+    if (digitalRead(ENCO_B_IZQ) == LOW) {
+      leftCount++;
     } else {
-      rightCount--;
+      leftCount--;
     }
   } else {
-    if (digitalRead(RH_ENCODER_B) == LOW) {
-      rightCount--;
+    if (digitalRead(ENCO_B_IZQ) == LOW) {
+      leftCount--;
     } else {
-      rightCount++;
+      leftCount++;
     }
   }
 }
 
-void leerVelocidad() {
-  long velocidadIzquierda = knobLeft.read();
-  long velocidadDerecha = knobRight.read();
+void rightEncoderEvento() {
+  if (digitalRead(ENCO_A_DER) == HIGH) {
+    if (digitalRead(ENCO_B_DER) == LOW) {
+      rightCount++;
+    } else {
+      rightCount--;
+    }
+  } else {
+    if (digitalRead(ENCO_B_DER) == LOW) {
+      rightCount--;
+    } else {
+      rightCount++;
+    }
+  }
 }
 
 void adelante() {
@@ -190,5 +177,4 @@ void reversa() {
 
   digitalWrite(BIN_1, LOW);
   digitalWrite(BIN_2, HIGH);
-
 }
