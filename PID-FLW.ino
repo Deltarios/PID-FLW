@@ -37,7 +37,10 @@
 unsigned char sensores_ir[] = {0, 1, 2, 3, 4, 5, 6, 7};
 unsigned int valoresSensorIr[NUM_SENSOR_IR];
 
-bool estadoBoton = false;
+int estadoBoton = HIGH;
+int esperaTiempo = 560;
+long tiempo = 0;
+int previous = LOW;
 bool estadoRobot = false;
 
 const float velocidadBase = 100.0;
@@ -94,9 +97,6 @@ void setup() {
   for (int i = 0; i < 5; i++) {
     qtra.calibrate();
   }
-
-  adelante();
-  digitalWrite(STBY, LOW);
 }
 
 void leftEncoderEvento() {
@@ -134,20 +134,26 @@ void rightEncoderEvento() {
 void loop() {
 
   estadoBoton = digitalRead(BUTTON_STATUS);
+  delay(40);
 
-  if (estadoBoton) {
-    estadoRobot = !estadoRobot;
-    delay(40);
+  if (estadoBoton == HIGH && previous == LOW && millis() - tiempo > esperaTiempo) {
+    if (estadoRobot)
+      estadoRobot = false;
+    else
+      estadoRobot = true;
+    tiempo = millis();
   }
 
   if (!estadoRobot) {
-    if (STBY == HIGH) {
+    int motoresEncendidos = digitalRead(STBY);
+    if (motoresEncendidos == 1) {
       digitalWrite(STBY, LOW);
     }
     loop();
   }
 
   inicioRobot();
+  previous = estadoBoton;
 }
 
 void inicioRobot() {
@@ -155,7 +161,7 @@ void inicioRobot() {
 
   leerVelocidades();
 
-  int errorPID = calculoPID;
+  int errorPID = calculoPID();
 
   float velocidadActualIzq = velocidadIzq - errorPID;
   float velocidadActualDer = velocidadDer + errorPID;
@@ -175,6 +181,7 @@ void inicioRobot() {
   }
 
   analogWrite(PWMA, potenciaPWMDer);
+  analogWrite(PWMB, potenciaPWMIzq);
   adelante();
 
   posicionAnterior = posicion;
